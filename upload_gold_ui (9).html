@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>得九 | AI问答助手</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      color: #3b2b09;
+      background: radial-gradient(circle at 50% 40%, #fff8e6, #fff2cc, #fbe7a8);
+      background-size: 300% 300%;
+      animation: softFlow 15s ease-in-out infinite;
+    }
+
+    @keyframes softFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .light-glow {
+      position: absolute;
+      top: -10%;
+      left: -10%;
+      width: 120%;
+      height: 120%;
+      background: radial-gradient(circle at 50% 40%, rgba(255, 255, 240, 0.3), rgba(255, 235, 190, 0.05), transparent);
+      filter: blur(60px);
+      animation: pulse 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { opacity: 0.5; }
+      to { opacity: 1; }
+    }
+
+    h1 {
+      font-size: 44px;
+      font-weight: 700;
+      background: linear-gradient(90deg, #c39a4b, #967430);
+      -webkit-background-clip: text;
+      color: transparent;
+      margin-bottom: 35px;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 10px rgba(150,100,10,0.2);
+    }
+
+    p {
+      font-size: 20px;
+      font-weight: 500;
+      color: #4a3a0d;
+      text-align: center;
+      line-height: 1.8;
+      z-index: 2;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(210, 180, 80, 0.3);
+      border-radius: 40px;
+      padding: 12px 24px;
+      width: 600px;
+      max-width: 90%;
+      margin-top: 50px;
+      box-shadow: 0 6px 20px rgba(200, 160, 70, 0.2), inset 0 1px 0 rgba(255,255,255,0.5);
+      backdrop-filter: blur(8px);
+      z-index: 2;
+    }
+
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #5c4a1e;
+      font-size: 16px;
+    }
+
+    .search-box button {
+      background: linear-gradient(145deg, #f3cc72, #d6a843);
+      border: none;
+      color: white;
+      border-radius: 50%;
+      width: 46px;
+      height: 46px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: all 0.3s;
+      box-shadow: 0 0 10px rgba(230,190,100,0.4);
+    }
+
+    .search-box button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(200,160,60,0.6);
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 45px;
+      z-index: 2;
+    }
+
+    .button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 38px;
+      border-radius: 35px;
+      border: 1px solid #e0c177;
+      background: linear-gradient(180deg, #fffefc, #fff3d8);
+      color: #5a4314;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(180,140,60,0.15), inset 0 2px 3px rgba(255,255,255,0.7);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .button i {
+      font-size: 18px;
+      background: linear-gradient(120deg, #ffd77a, #c78a1d);
+      -webkit-background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 1px 2px rgba(150,100,20,0.3));
+      transition: transform 0.25s, filter 0.25s;
+    }
+
+    .button:hover i {
+      transform: scale(1.15) rotate(8deg);
+      filter: drop-shadow(0 2px 6px rgba(255,200,100,0.5));
+    }
+
+    .button:hover {
+      background: linear-gradient(180deg, #fff4c2, #f9d877);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 18px rgba(200,160,60,0.25);
+    }
+
+    .submenu {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      position: absolute;
+      z-index: 3;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid #e6cf87;
+      border-radius: 20px;
+      box-shadow: 0 6px 25px rgba(180,140,50,0.25);
+      padding: 10px 0;
+      width: 230px;
+      animation: smoothSlide 0.35s ease forwards;
+    }
+
+    @keyframes smoothSlide {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(-15px); }
+    }
+
+    .submenu button {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 12px 0;
+      color: #7a5c1f;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .submenu button:hover {
+      background: rgba(250,220,130,0.2);
+    }
+
+    footer {
+      position: absolute;
+      bottom: 20px;
+      font-size: 13px;
+      color: #8c7a45;
+      text-align: center;
+      opacity: 0.9;
+      letter-spacing: 0.3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="light-glow"></div>
+
+  <h1>得九 | AI问答助手</h1>
+  <p>基于500+场咨询共计100万+字的咨询稿<br>为您提供专业的商业洞察和实战经验</p>
+
+  <div class="search-box">
+    <input id="searchInput" type="text" placeholder="问问得九如何做盈利增长决策..." />
+    <button onclick="handleSearch()">➤</button>
+  </div>
+
+  <div class="button-group">
+    <button class="button" id="askBtn" onclick="handleAsk(event)"><i class="fa-solid fa-message"></i>你问我答</button>
+    <button class="button" id="knowledgeBtn" onclick="handleKnowledge(event)"><i class="fa-solid fa-book-open"></i>知识库</button>
+    <button class="button" id="recommendBtn" onclick="toggleRecommend(event)"><i class="fa-solid fa-star"></i>得九推荐</button>
+  </div>
+
+  <div id="recommendMenu" class="submenu">
+    <button onclick="openGrowthModel()">盈利增长决策模型</button>
+    <button onclick="openInvestment()">得九投资</button>
+  </div>
+
+  <footer>
+    © 2025 得九科技 | All Rights Reserved | 沪ICP备20250101号
+  </footer>
+
+  <script>
+    function closeAllMenus() {
+      document.getElementById('recommendMenu').style.display = 'none';
+    }
+
+    function handleSearch() {
+      closeAllMenus();
+      const query = document.getElementById('searchInput').value;
+      alert(`正在根据知识库检索：${query}`);
+    }
+
+    function handleAsk(event) {
+      event.stopPropagation();
+      closeAllMenus();
+      alert('进入智能问答机器人（基于知识库语料）');
+    }
+
+    function handleKnowledge(event) {
+      event.stopPropagation();
+      closeAllMenus();
+      alert('加载知识库目录结构...');
+    }
+
+    function toggleRecommend(event) {
+      event.stopPropagation();
+      const menu = document.getElementById('recommendMenu');
+      const btn = document.getElementById('recommendBtn');
+      const rect = btn.getBoundingClientRect();
+      menu.style.top = `${rect.top - 130}px`;
+      menu.style.left = `${rect.left + rect.width / 2 - 115}px`;
+      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function openGrowthModel() {
+      closeAllMenus();
+      alert('打开 盈利增长决策模型 页面');
+    }
+
+    function openInvestment() {
+      closeAllMenus();
+      alert('打开 得九投资 页面');
+    }
+
+    document.addEventListener('click', function(e) {
+      const menu = document.getElementById('recommendMenu');
+      const btn = document.getElementById('recommendBtn');
+      if (menu.style.display === 'flex' && !menu.contains(e.target) && e.target !== btn) {
+        closeAllMenus();
+      }
+    });
+  </script>
+</body>
+</html>
